@@ -289,26 +289,37 @@ Image(filename='images/transformer.png', width=500)
 # 
 
 # %%
-def create_fixed_positional_encoding(dim, max_len=5000):
-    "Implement the PE function."
+def create_fixed_positional_encoding(
+    dim: int, max_len: int = 5000
+) -> torch.Tensor:
+    """Implement the PE function.
+
+    Args:
+        dim: Model dimension d_model, e.g. 512.
+        max_len: Maximum sequence length.
+
+    Returns:
+        Positional encoding tensor of shape (1, max_len, dim) with
+        requires_grad=False.
+    """
 
     # Compute the positional encodings once in log space.
-    pe = torch.zeros(max_len, dim)                      # empty encodings vectors
-    position = torch.arange(0, max_len).unsqueeze(1)    # position index
+    pe: torch.Tensor = torch.zeros(max_len, dim)                      # (max_len, dim)
+    position: torch.Tensor = torch.arange(0, max_len).unsqueeze(1)    # (max_len, 1)
 
     # $10000^{\frac{2i}{d_{model}}}$
-    div_term = torch.exp(
+    div_term: torch.Tensor = torch.exp(                               # (dim//2,)
         torch.arange(0, dim, 2) * -(math.log(10000.0) / dim)
     )
 
     # $PE_{p,2i} = sin\Bigg(\frac{p}{10000^{\frac{2i}{d_{model}}}}\Bigg)$
-    pe[:, 0::2] = torch.sin(position * div_term)
+    pe[:, 0::2] = torch.sin(position * div_term)                      # (max_len, dim//2) -> even cols
 
     # $PE_{p,2i + 1} = cos\Bigg(\frac{p}{10000^{\frac{2i}{d_{model}}}}\Bigg)$
-    pe[:, 1::2] = torch.cos(position * div_term)
+    pe[:, 1::2] = torch.cos(position * div_term)                      # (max_len, dim//2) -> odd cols
 
     # add batch dimension
-    pe = pe.unsqueeze(0).requires_grad_(False)
+    pe = pe.unsqueeze(0).requires_grad_(False)                        # (1, max_len, dim)
 
     return pe   # simple PE (without embedding info)
 
